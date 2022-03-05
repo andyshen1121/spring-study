@@ -1,0 +1,10 @@
+com\study\spring\annotation\GPService.class
+com\study\spring\annotation\GPAutowired.class
+com\study\spring\controller\AController.class
+com\study\spring\servlet\DispatcherServlet.class
+com\study\spring\annotation\GPRequestMapping.class
+com\study\spring\service\IAService.class
+com\study\spring\service\impl\BServiceImpl.class
+com\study\spring\service\IBService.class
+com\study\spring\service\impl\AServiceImpl.class
+com\study\spring\annotation\GPController.class
