@@ -1,9 +1,6 @@
 package com.study.spring.servlet;
 
-import com.study.spring.annotation.GPAutowired;
-import com.study.spring.annotation.GPController;
-import com.study.spring.annotation.GPRequestMapping;
-import com.study.spring.annotation.GPService;
+import com.study.spring.annotation.*;
 
 
 import javax.servlet.ServletConfig;
@@ -14,12 +11,24 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 
 public class DispatcherServlet extends HttpServlet {
+
+//    public static void main(String[] args) {
+//        //DispatcherServlet
+//        System.out.println(DispatcherServlet.class.getSimpleName());
+//        //com.study.spring.servlet.DispatcherServlet
+//        System.out.println(DispatcherServlet.class.getName());
+//        //class java.lang.Class
+//        System.out.println(DispatcherServlet.class.getClass());
+//        //class com.study.spring.servlet.DispatcherServlet
+//        System.out.println(DispatcherServlet.class);
+//    }
 
     // 保存用户配置好的配置文件
     private Properties contextConfig = new Properties();
@@ -64,9 +73,50 @@ public class DispatcherServlet extends HttpServlet {
             return;
         }
         Method method = this.handlerMapping.get(url);
+
+
+        // 1. 先把形参的位置和参数名字建立映射关系，并且缓存下来
+        Map<String, Integer> paramIndexMapping = new HashMap<>();
+        Annotation[][] pa = method.getParameterAnnotations();
+        for (int i = 0; i < pa.length; i++) {
+            for (Annotation a : pa[i]) {
+                if (a instanceof GPRequestParam) {
+                    String paramName = ((GPRequestParam) a).value();
+                    if (!"".equals(paramName.trim())) {
+                        paramIndexMapping.put(paramName, i);
+                    }
+                }
+            }
+        }
+
+        Class<?>[] paramTypes = method.getParameterTypes();
+        for (int i = 0; i < paramTypes.length; i++) {
+            Class<?> type = paramTypes[i];
+            if (type == HttpServletRequest.class || type == HttpServletResponse.class) {
+                paramIndexMapping.put(type.getName(), i);
+            }
+        }
+        // 2. 根据参数位置匹配名字，从url中取到参数名字对应的值
+        Object[] paramValues = new Object[paramTypes.length];
+
+        //http://localhost/demo/query?name=Tom&name=Tomcat&name=Mic
         Map<String, String[]> params = req.getParameterMap();
+        for (Map.Entry<String, String[]> param : params.entrySet()) {
+            String value = Arrays.toString(param.getValue()).replaceAll("\\[|\\]", "")
+                    .replaceAll("\\s", "");
+            if (!paramIndexMapping.containsKey(param.getKey())) {
+                continue;
+            }
+            int index = paramIndexMapping.get(param.getKey());
+            paramValues[index] = value;
+        }
+        if (paramIndexMapping.containsKey(HttpServletRequest.class.getName())) {
+            int index = paramIndexMapping.get(HttpServletRequest.class.getName());
+            paramValues[index] = resp;
+        }
+
         String beanName = toLowerFirstCase(method.getDeclaringClass().getSimpleName());
-        method.invoke(ioc.get(beanName), new Object[]{req, resp, params.get("name")[0]});
+        method.invoke(ioc.get(beanName), paramValues);
     }
 
     @Override
