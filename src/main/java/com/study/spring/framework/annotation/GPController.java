@@ -1,10 +1,10 @@
-package com.study.spring.annotation;
+package com.study.spring.framework.annotation;
 
 import java.lang.annotation.*;
 
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface GPService {
+public @interface GPController {
     String value() default "";
 }

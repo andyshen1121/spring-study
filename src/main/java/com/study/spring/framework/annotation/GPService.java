@@ -1,11 +1,10 @@
-package com.study.spring.annotation;
+package com.study.spring.framework.annotation;
 
 import java.lang.annotation.*;
 
-@Target(ElementType.PARAMETER)
+@Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)
 @Documented
-public @interface GPRequestParam {
+public @interface GPService {
     String value() default "";
-
 }

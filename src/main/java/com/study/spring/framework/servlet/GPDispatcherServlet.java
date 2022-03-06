@@ -1,6 +1,7 @@
-package com.study.spring.servlet;
+package com.study.spring.framework.servlet;
 
-import com.study.spring.annotation.*;
+import com.study.spring.framework.annotation.*;
+import com.study.spring.framework.context.GPApplicationContext;
 
 
 import javax.servlet.ServletConfig;
@@ -17,18 +18,7 @@ import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.*;
 
-public class DispatcherServlet extends HttpServlet {
-
-//    public static void main(String[] args) {
-//        //DispatcherServlet
-//        System.out.println(DispatcherServlet.class.getSimpleName());
-//        //com.study.spring.servlet.DispatcherServlet
-//        System.out.println(DispatcherServlet.class.getName());
-//        //class java.lang.Class
-//        System.out.println(DispatcherServlet.class.getClass());
-//        //class com.study.spring.servlet.DispatcherServlet
-//        System.out.println(DispatcherServlet.class);
-//    }
+public class GPDispatcherServlet extends HttpServlet {
 
     // 保存用户配置好的配置文件
     private Properties contextConfig = new Properties();
@@ -41,6 +31,9 @@ public class DispatcherServlet extends HttpServlet {
 
     // 保存Controller里面URL和Method的对应关系
     private Map<String, Method> handlerMapping = new HashMap<>();
+
+    // IoC容器的访问上下文
+    private GPApplicationContext applicationContext = null;
 
     @Override
     protected void doGet(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
@@ -121,20 +114,23 @@ public class DispatcherServlet extends HttpServlet {
 
     @Override
     public void init(ServletConfig config) throws ServletException {
-        // 1. 加载配置文件
-        doLoadConfig(config.getInitParameter("contextConfigLocation"));
+//        // 1. 加载配置文件
+//        doLoadConfig(config.getInitParameter("contextConfigLocation"));
+//
+//        // 2. 扫描相关的类
+//        doScanner(contextConfig.getProperty("scanPackage"));
+//
+//        // ========IoC==========
+//        // 3. 初始化IoC容器，并且将扫描到的类进行实例化，缓存到IoC容器中
+//        doInstance();
+//
+//        // ========DI==========
+//        // 4. 完成依赖注入
+//        doAutowired();
 
-        // 2. 扫描相关的类
-        doScanner(contextConfig.getProperty("scanPackage"));
+        applicationContext = new GPApplicationContext(config.getInitParameter("contextConfigLocation"));
 
-        // ========IoC==========
-        // 3. 初始化IoC容器，并且将扫描到的类进行实例化，缓存到IoC容器中
-        doInstance();
-
-        // ========DI==========
-        // 4. 完成依赖注入
-        doAutowired();
-
+        // =======MVC功能=========
         // 5. 初始化HandlerMapping
         doInitHandlerMapping();
 

@@ -1,8 +1,8 @@
-package com.study.spring.controller;
+package com.study.spring.test.controller;
 
-import com.study.spring.annotation.GPController;
-import com.study.spring.annotation.GPRequestMapping;
-import com.study.spring.annotation.GPRequestParam;
+import com.study.spring.framework.annotation.GPController;
+import com.study.spring.framework.annotation.GPRequestMapping;
+import com.study.spring.framework.annotation.GPRequestParam;
 
 @GPController
 @GPRequestMapping("/test")
