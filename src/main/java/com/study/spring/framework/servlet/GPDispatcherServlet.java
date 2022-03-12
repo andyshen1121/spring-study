@@ -21,13 +21,13 @@ import java.util.*;
 public class GPDispatcherServlet extends HttpServlet {
 
     // 保存用户配置好的配置文件
-    private Properties contextConfig = new Properties();
+//    private Properties contextConfig = new Properties();
 
     // 缓存从包路径下扫描的全类名
-    private List<String> classNames = new ArrayList<>();
+//    private List<String> classNames = new ArrayList<>();
 
     // 保存所有扫描的类的实例
-    private Map<String, Object> ioc = new HashMap<>();
+//    private Map<String, Object> ioc = new HashMap<>();
 
     // 保存Controller里面URL和Method的对应关系
     private Map<String, Method> handlerMapping = new HashMap<>();
@@ -109,7 +109,7 @@ public class GPDispatcherServlet extends HttpServlet {
         }
 
         String beanName = toLowerFirstCase(method.getDeclaringClass().getSimpleName());
-        method.invoke(ioc.get(beanName), paramValues);
+        method.invoke(applicationContext.getBean(beanName), paramValues);
     }
 
     @Override
@@ -140,11 +140,12 @@ public class GPDispatcherServlet extends HttpServlet {
     }
 
     private void doInitHandlerMapping() {
-        if (ioc.isEmpty()) {
+        if (this.applicationContext.getBeanDefinitionCount() == 0) {
             return;
         }
-        for (Map.Entry<String, Object> entry : ioc.entrySet()) {
-            Class<?> clazz = entry.getValue().getClass();
+        for (String beanName : this.applicationContext.getBeanDefinitionNames()) {
+            Object instance = applicationContext.getBean(beanName);
+            Class<?> clazz = instance.getClass();
             if (!clazz.isAnnotationPresent(GPController.class)) {
                 continue;
             }
@@ -166,71 +167,71 @@ public class GPDispatcherServlet extends HttpServlet {
         }
     }
 
-    private void doAutowired() {
-        if (ioc.isEmpty()) {
-            return;
-        }
-        for (Map.Entry<String, Object> entry : ioc.entrySet()) {
-            // 忽略字段的修饰符，不管你是private、protected、public、default
-            for (Field field : entry.getValue().getClass().getDeclaredFields()) {
-                if (!field.isAnnotationPresent(GPAutowired.class)) {
-                    continue;
-                }
-                GPAutowired autowired = field.getAnnotation(GPAutowired.class);
-                String beanName = autowired.value().trim();
-                if ("".equals(beanName)) {
-                    beanName = field.getType().getName();
-                }
-                field.setAccessible(true);
-                try {
-                    field.set(entry.getValue(), ioc.get(beanName));
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-    }
+//    private void doAutowired() {
+//        if (ioc.isEmpty()) {
+//            return;
+//        }
+//        for (Map.Entry<String, Object> entry : ioc.entrySet()) {
+//            // 忽略字段的修饰符，不管你是private、protected、public、default
+//            for (Field field : entry.getValue().getClass().getDeclaredFields()) {
+//                if (!field.isAnnotationPresent(GPAutowired.class)) {
+//                    continue;
+//                }
+//                GPAutowired autowired = field.getAnnotation(GPAutowired.class);
+//                String beanName = autowired.value().trim();
+//                if ("".equals(beanName)) {
+//                    beanName = field.getType().getName();
+//                }
+//                field.setAccessible(true);
+//                try {
+//                    field.set(entry.getValue(), ioc.get(beanName));
+//                } catch (IllegalAccessException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//    }
 
-    private void doInstance() {
-        if (classNames.isEmpty()) {
-            return;
-        }
-        for (String className : classNames) {
-            try {
-                Class<?> clazz = Class.forName(className);
-                if (clazz.isAnnotationPresent(GPController.class)) {
-                    String beanName = toLowerFirstCase(clazz.getSimpleName());
-                    Object instance = clazz.newInstance();
-                    ioc.put(beanName, instance);
-                } else if (clazz.isAnnotationPresent(GPService.class)) {
-                    // 1. 默认类名首字母小写
-                    String beanName = toLowerFirstCase(clazz.getSimpleName());
-
-                    // 2. 如果在多个包下出现了相同的类名，优先使用别名（自定义命名）
-                    GPService service = clazz.getAnnotation(GPService.class);
-                    if (!"".equals(service.value())) {
-                        beanName = service.value();
-                    }
-                    Object instance = clazz.newInstance();
-                    ioc.put(beanName, instance);
-
-                    // 3. 如果是接口，只能初始化它的实现类
-                    for (Class<?> i : clazz.getInterfaces()) {
-                        if (ioc.containsKey(i.getName())) {
-                            throw new Exception("The " + i.getName() + " exists!");
-                        }
-                        ioc.put(i.getName(), instance);
-                    }
-
-                } else {
-                    continue;
-                }
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
+//    private void doInstance() {
+//        if (classNames.isEmpty()) {
+//            return;
+//        }
+//        for (String className : classNames) {
+//            try {
+//                Class<?> clazz = Class.forName(className);
+//                if (clazz.isAnnotationPresent(GPController.class)) {
+//                    String beanName = toLowerFirstCase(clazz.getSimpleName());
+//                    Object instance = clazz.newInstance();
+//                    ioc.put(beanName, instance);
+//                } else if (clazz.isAnnotationPresent(GPService.class)) {
+//                    // 1. 默认类名首字母小写
+//                    String beanName = toLowerFirstCase(clazz.getSimpleName());
+//
+//                    // 2. 如果在多个包下出现了相同的类名，优先使用别名（自定义命名）
+//                    GPService service = clazz.getAnnotation(GPService.class);
+//                    if (!"".equals(service.value())) {
+//                        beanName = service.value();
+//                    }
+//                    Object instance = clazz.newInstance();
+//                    ioc.put(beanName, instance);
+//
+//                    // 3. 如果是接口，只能初始化它的实现类
+//                    for (Class<?> i : clazz.getInterfaces()) {
+//                        if (ioc.containsKey(i.getName())) {
+//                            throw new Exception("The " + i.getName() + " exists!");
+//                        }
+//                        ioc.put(i.getName(), instance);
+//                    }
+//
+//                } else {
+//                    continue;
+//                }
+//
+//            } catch (Exception e) {
+//                e.printStackTrace();
+//            }
+//        }
+//    }
 
     private String toLowerFirstCase(String simpleName) {
         char[] chars = simpleName.toCharArray();
@@ -239,43 +240,43 @@ public class GPDispatcherServlet extends HttpServlet {
     }
 
     // 扫描classPath下符合包路径下
-    private void doScanner(String scanPackage) {
-        // 把点替换成/
-        URL url = this.getClass().getClassLoader().getResource("/" + scanPackage.replaceAll("\\.", "/"));
-        File classPath = new File(url.getFile());
-        // 获取路径下所有类名
-        for (File file : classPath.listFiles()) {
-            if (file.isDirectory()) {
-                doScanner(scanPackage + "." + file.getName());
-            } else {
-                // 取反，可以减少代码嵌套
-                if (!file.getName().endsWith(".class")) {
-                    continue;
-                }
-                // 包名.类名
-                String className = (scanPackage + "." + file.getName().replace(".class", ""));
-                // 实例化 要用到Class.forName(className);
-                classNames.add(className);
-            }
+//    private void doScanner(String scanPackage) {
+//        // 把点替换成/
+//        URL url = this.getClass().getClassLoader().getResource("/" + scanPackage.replaceAll("\\.", "/"));
+//        File classPath = new File(url.getFile());
+//        // 获取路径下所有类名
+//        for (File file : classPath.listFiles()) {
+//            if (file.isDirectory()) {
+//                doScanner(scanPackage + "." + file.getName());
+//            } else {
+//                // 取反，可以减少代码嵌套
+//                if (!file.getName().endsWith(".class")) {
+//                    continue;
+//                }
+//                // 包名.类名
+//                String className = (scanPackage + "." + file.getName().replace(".class", ""));
+//                // 实例化 要用到Class.forName(className);
+//                classNames.add(className);
+//            }
+//
+//        }
+//    }
 
-        }
-    }
-
-    private void doLoadConfig(String contextConfigLocation) {
-        InputStream is = this.getClass().getClassLoader().getResourceAsStream(contextConfigLocation);
-        try {
-            contextConfig.load(is);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (null != is) {
-                try {
-                    is.close();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
-
-    }
+//    private void doLoadConfig(String contextConfigLocation) {
+//        InputStream is = this.getClass().getClassLoader().getResourceAsStream(contextConfigLocation);
+//        try {
+//            contextConfig.load(is);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        } finally {
+//            if (null != is) {
+//                try {
+//                    is.close();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//
+//    }
 }

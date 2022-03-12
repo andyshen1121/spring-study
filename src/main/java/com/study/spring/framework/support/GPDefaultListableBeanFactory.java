@@ -21,7 +21,12 @@ public class GPDefaultListableBeanFactory implements GPBeanFactory {
         return null;
     }
 
-    public void doRegistBeanDefinition(List<GPBeanDefinition> beanDefinitions) {
-
+    public void doRegistBeanDefinition(List<GPBeanDefinition> beanDefinitions) throws Exception{
+        for (GPBeanDefinition beanDefinition : beanDefinitions) {
+            if (this.beanDefinitionMap.containsKey(beanDefinition.getFactoryBeanName())) {
+                throw new Exception("The " + beanDefinition.getFactoryBeanName() + " exists");
+            }
+            beanDefinitionMap.put(beanDefinition.getFactoryBeanName(), beanDefinition);
+        }
     }
 }
